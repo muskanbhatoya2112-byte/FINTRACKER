@@ -1,0 +1,562 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Financial Dashboard{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+<style>
+    /* Styling to support responsive mobile sidebar toggle */
+    .mobile-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        display: none;
+    }
+    .mobile-backdrop.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="mobile-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Sidebar Panel (Screenshot 3 Left) -->
+    <aside class="sidebar" id="dashboardSidebar">
+        <a href="{% url 'landing' %}" class="sidebar-logo">
+            <div class="sidebar-logo-icon">
+                <i class="fa-solid fa-box-open"></i>
+            </div>
+            <span class="sidebar-logo-text">FinTrack</span>
+        </a>
+
+        <!-- Sidebar Navigation -->
+        <ul class="sidebar-nav">
+            <li>
+                <a href="#" class="sidebar-link active">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'expense_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-credit-card"></i> Expenses
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'income_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-money-bill-wave"></i> Earnings
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'budget_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-wallet"></i> Budgets
+                </a>
+            </li>
+            <li>
+                <a href="#" class="sidebar-link">
+                    <i class="fa-solid fa-chart-line"></i> Reports
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'change_password' %}" class="sidebar-link">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+
+        <!-- Upgrade to Pro Card -->
+        <div class="sidebar-banner">
+            <h4 class="sidebar-banner-title">Upgrade to Pro</h4>
+            <p class="sidebar-banner-text">Get advanced insights, custom alerts, and unlimited reports.</p>
+            <button class="btn btn-sidebar-banner">Unlock Now</button>
+        </div>
+    </aside>
+
+    <!-- Main Section (Screenshot 3 Right) -->
+    <main class="main-content">
+        
+        <!-- Header Navbar (Search, Notifications, Profile) -->
+        <header class="main-header">
+            <div class="d-flex align-items-center gap-3">
+                <button class="mobile-header-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search transactions, reports...">
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-notification" aria-label="View notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+                
+                <!-- Dropdown profile menu -->
+                <div class="dropdown">
+                    <div class="user-profile-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="avatar-icon">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        <div class="profile-info d-none d-sm-block">
+                            <h5 class="profile-name">{{ user.full_name|default:user.username }}</h5>
+                            <p class="profile-role">Premium Account</p>
+                        </div>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2" style="border-radius: 12px; font-size: 0.9rem;">
+                        <li class="px-3 py-2 border-bottom">
+                            <span class="text-muted d-block small">Logged in as</span>
+                            <strong>{{ user.email }}</strong>
+                        </li>
+                        <li><a class="dropdown-menu-item dropdown-item py-2 px-3 mt-1" href="{% url 'change_password' %}"><i class="fa-solid fa-key text-muted me-2"></i> Change Password</a></li>
+                        <li><a class="dropdown-menu-item dropdown-item py-2 px-3 text-danger" href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Log Out</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Message Alerts -->
+        {% if messages %}
+        <div class="row mb-4">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'success' %}
+                        <i class="fa-solid fa-circle-check"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    {% else %}
+                        <i class="fa-solid fa-circle-info"></i>
+                    {% endif %}
+                    <div>{{ message }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Greeting Row -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="fw-bold text-dark mb-1" style="font-size: 1.75rem;">Good Morning, {{ user.full_name|default:user.username }}</h1>
+                <p class="text-secondary mb-0" style="font-size: 0.95rem;">Here's what's happening with your finances today.</p>
+            </div>
+            <div>
+                <a href="{% url 'expense_create' %}" class="btn btn-auth-primary d-flex align-items-center gap-2 text-decoration-none" style="width: auto; padding: 0.65rem 1.25rem; color: #ffffff;">
+                    <i class="fa-solid fa-plus"></i> <span class="d-none d-sm-inline">Add Transaction</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Metrics Cards Row -->
+        <div class="row g-4 mb-4">
+            <!-- Total Balance Card -->
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="metric-card">
+                    <h3 class="metric-title">Current Balance</h3>
+                    <div class="metric-value">${{ metrics.total_balance|floatformat:2 }}</div>
+                    <div class="metric-indicator {% if metrics.total_balance >= 0 %}indicator-up{% else %}indicator-down{% endif %}">
+                        <i class="fa-solid fa-arrow-trend-up"></i> {{ metrics.balance_change }} <span class="text-secondary fw-normal">net vs last month</span>
+                    </div>
+                    <div class="small text-secondary mt-2">
+                        Income: <span class="text-success fw-semibold">${{ metrics.total_income|floatformat:2 }}</span>
+                        &nbsp;·&nbsp;
+                        Expenses: <span class="text-danger fw-semibold">${{ metrics.total_expenses|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Income Card -->
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="metric-card">
+                    <h3 class="metric-title">Monthly Income</h3>
+                    <div class="metric-value">${{ metrics.monthly_income|floatformat:2 }}</div>
+                    <div class="metric-indicator indicator-up">
+                        <i class="fa-solid fa-circle-check"></i> {{ metrics.income_status }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Expense Card -->
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="metric-card">
+                    <h3 class="metric-title">Monthly Expense</h3>
+                    <div class="metric-value">${{ metrics.monthly_expense|floatformat:2 }}</div>
+                    <div class="metric-indicator indicator-down">
+                        <i class="fa-solid fa-circle-exclamation"></i> {{ metrics.expense_status }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Savings Goal Card (Radial Gauge) -->
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="metric-card">
+                    <h3 class="metric-title">Savings Goal</h3>
+                    <div class="metric-value">{{ metrics.savings_goal_percent }}%</div>
+                    <div class="metric-indicator indicator-neutral">
+                        {% if metrics.savings_goal_percent >= 50 %}On track{% elif metrics.savings_goal_percent > 0 %}Building savings{% else %}Needs attention{% endif %}
+                    </div>
+                    <!-- Circular SVG gauge matching mockups -->
+                    <div class="savings-progress-wrapper">
+                        <svg width="60" height="60" viewBox="0 0 36 36" class="w-100 h-100">
+                            <!-- Background Track -->
+                            <path class="text-light" stroke="#f1f5f9" stroke-width="3" fill="none" 
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <!-- Active Progress -->
+                            <path stroke="#3b2cd4" stroke-width="3" stroke-dasharray="{{ metrics.savings_goal_percent }}, 100" stroke-linecap="round" fill="none" 
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <text x="18" y="21.5" fill="#1e293b" font-family="'Outfit', sans-serif" font-size="7.5" font-weight="700" text-anchor="middle">
+                                {{ metrics.savings_goal_percent }}%
+                            </text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+            <!-- Spending Trends Line Chart -->
+            <div class="col-12 col-lg-8">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Spending Trends</h3>
+                        <div class="chart-actions">
+                            <button class="btn-chart-toggle active">Low</button>
+                            <button class="btn-chart-toggle">High</button>
+                        </div>
+                    </div>
+                    <div class="chart-canvas-wrap" style="height: 250px;">
+                        <canvas id="spendingTrendsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Health Doughnut Chart -->
+            <div class="col-12 col-lg-4">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Budget Health</h3>
+                    </div>
+                    <div class="chart-canvas-wrap" style="height: 250px; display: flex; justify-content: center; align-items: center;">
+                        <canvas id="budgetHealthChart" style="max-height: 220px; max-width: 220px;"></canvas>
+                        <!-- Center absolute labels -->
+                        <div class="doughnut-inner-label">
+                            <h4 class="inner-label-value">{{ budget_chart.stability_score }}%</h4>
+                            <p class="inner-label-text">Stability</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Status & Top Categories Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-lg-6">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="chart-title mb-0">Budget Status</h3>
+                        <a href="{{ budget_list_url }}" class="text-decoration-none small" style="color: #3b2cd4; font-weight: 600;">Manage</a>
+                    </div>
+                    {% if budget_status %}
+                    <div class="table-responsive">
+                        <table class="table transactions-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Spent / Limit</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for budget in budget_status %}
+                                <tr>
+                                    <td class="fw-medium">{{ budget.category }}</td>
+                                    <td class="text-muted small">
+                                        ${{ budget.spent|floatformat:2 }} / ${{ budget.limit|floatformat:2 }}
+                                        <span class="d-block" style="font-size: 0.75rem;">{{ budget.percent_used }}% used</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-pill status-{{ budget.status_color }}">{{ budget.status_label }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-secondary small mb-3">No budgets set for this month. Create limits to track spending progress.</p>
+                    <a href="{% url 'budget_create' %}" class="btn btn-sm btn-auth-primary" style="width: auto; padding: 0.5rem 1rem;">Create Budget</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <div class="chart-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="chart-title mb-0">Top Spending Categories</h3>
+                        <span class="text-muted small">This month</span>
+                    </div>
+                    {% if top_spending_categories %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for item in top_spending_categories %}
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="transaction-icon-box icon-dining">
+                                    {% if item.category_key == 'technology' %}
+                                        <i class="fa-solid fa-laptop"></i>
+                                    {% elif item.category_key == 'housing' %}
+                                        <i class="fa-solid fa-house-chimney"></i>
+                                    {% elif item.category_key == 'food_groceries' %}
+                                        <i class="fa-solid fa-basket-shopping"></i>
+                                    {% elif item.category_key == 'entertainment' %}
+                                        <i class="fa-solid fa-gamepad"></i>
+                                    {% elif item.category_key == 'utilities' %}
+                                        <i class="fa-solid fa-lightbulb"></i>
+                                    {% elif item.category_key == 'shopping' %}
+                                        <i class="fa-solid fa-bag-shopping"></i>
+                                    {% elif item.category_key == 'dining' %}
+                                        <i class="fa-solid fa-utensils"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-coins"></i>
+                                    {% endif %}
+                                </div>
+                                <span class="fw-medium">{{ item.category }}</span>
+                            </div>
+                            <span class="amount-expense fw-bold">${{ item.amount|floatformat:2 }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-secondary small mb-0">No expenses recorded this month yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions Card -->
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-card p-0">
+                    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+                        <h3 class="chart-title">Recent Transactions</h3>
+                        <a href="{% url 'expense_list' %}" class="text-decoration-none small" style="color: #3b2cd4; font-weight: 600;">View All</a>
+                    </div>
+                    <div class="table-responsive px-2">
+                        <table class="table transactions-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in recent_transactions %}
+                                <tr>
+                                    <td>
+                                        <div class="transaction-name-cell">
+                                            <!-- Color coded icons based on categories -->
+                                            <div class="transaction-icon-box {% if tx.is_income %}icon-income{% elif tx.category_key == 'technology' %}icon-tech{% else %}icon-dining{% endif %}">
+                                                {% if tx.is_income %}
+                                                    <i class="fa-solid fa-arrow-down-long"></i>
+                                                {% elif tx.category_key == 'technology' %}
+                                                    <i class="fa-solid fa-laptop"></i>
+                                                {% elif tx.category_key == 'dining' %}
+                                                    <i class="fa-solid fa-utensils"></i>
+                                                {% elif tx.category_key == 'housing' %}
+                                                    <i class="fa-solid fa-house-chimney"></i>
+                                                {% elif tx.category_key == 'food_groceries' %}
+                                                    <i class="fa-solid fa-basket-shopping"></i>
+                                                {% else %}
+                                                    <i class="fa-solid fa-receipt"></i>
+                                                {% endif %}
+                                            </div>
+                                            <span>{{ tx.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small fw-medium">{{ tx.category }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small">{{ tx.date }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="status-pill status-completed">{{ tx.status }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="{% if tx.is_income %}amount-income{% else %}amount-expense{% endif %}">
+                                            {% if tx.is_income %}+{% else %}-{% endif %}${{ tx.amount|floatformat:2 }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-secondary small">
+                                        No transactions yet. <a href="{% url 'expense_create' %}">Add an expense</a> or <a href="{% url 'income_create' %}">log income</a>.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Chart.js Libraries and initialization script -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Toggle mobile sidebar view drawer
+        const sidebarToggle = document.querySelector('#sidebarToggle');
+        const dashboardSidebar = document.querySelector('#dashboardSidebar');
+        const sidebarBackdrop = document.querySelector('#sidebarBackdrop');
+
+        if (sidebarToggle && dashboardSidebar && sidebarBackdrop) {
+            sidebarToggle.addEventListener('click', function () {
+                dashboardSidebar.classList.toggle('show');
+                sidebarBackdrop.classList.toggle('show');
+            });
+            
+            sidebarBackdrop.addEventListener('click', function () {
+                dashboardSidebar.classList.remove('show');
+                sidebarBackdrop.classList.remove('show');
+            });
+        }
+
+        // --- Spending Trends Line Chart ---
+        const spendingCtx = document.getElementById('spendingTrendsChart').getContext('2d');
+        
+        // Gradient fill below the line
+        const spendingGradient = spendingCtx.createLinearGradient(0, 0, 0, 250);
+        spendingGradient.addColorStop(0, 'rgba(59, 44, 212, 0.15)');
+        spendingGradient.addColorStop(1, 'rgba(59, 44, 212, 0.00)');
+
+        const spendingChartData = {
+            labels: {{ spending_chart.labels|safe }},
+            datasets: [{
+                label: 'Spending',
+                data: {{ spending_chart.data|safe }},
+                borderColor: '#3b2cd4',
+                borderWidth: 3,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#3b2cd4',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true,
+                backgroundColor: spendingGradient,
+                tension: 0.4  // Makes the line beautifully smooth (spline)
+            }]
+        };
+
+        new Chart(spendingCtx, {
+            type: 'line',
+            data: spendingChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e1b4b',
+                        padding: 10,
+                        titleFont: { family: 'Outfit', weight: '700' },
+                        bodyFont: { family: 'Outfit' },
+                        callbacks: {
+                            label: function(context) {
+                                return ' $' + context.raw.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: { family: 'Outfit', weight: '600' },
+                            color: '#94a3b8'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: '#f1f5f9'
+                        },
+                        ticks: {
+                            font: { family: 'Outfit', weight: '600' },
+                            color: '#94a3b8',
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- Budget Health Doughnut Chart ---
+        const budgetCtx = document.getElementById('budgetHealthChart').getContext('2d');
+        
+        new Chart(budgetCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ budget_chart.labels|safe }},
+                datasets: [{
+                    data: {{ budget_chart.data|safe }},
+                    backgroundColor: ['#3b2cd4', '#06b6d4'],
+                    borderWidth: 4,
+                    borderColor: '#ffffff',
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '78%',  // Thinner ring to accommodate label
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 10,
+                            padding: 15,
+                            font: { family: 'Outfit', weight: '600', size: 11 },
+                            color: '#475569'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e1b4b',
+                        padding: 8,
+                        titleFont: { family: 'Outfit', weight: '700' },
+                        bodyFont: { family: 'Outfit' },
+                        callbacks: {
+                            label: function(context) {
+                                return ' ' + context.label + ': ' + context.raw + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

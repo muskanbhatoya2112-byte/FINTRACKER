@@ -1,0 +1,241 @@
+/* ════════════════════════════════════════════════════
+   FinTrack — Budgets Module Stylesheet
+   Companion to dashboard.css, scoped to budget views.
+   ════════════════════════════════════════════════════ */
+
+/* ── Filter Bar ─────────────────────────────────────── */
+.budget-filter-bar {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+/* ── Summary Metric Cards ────────────────────────────── */
+.budget-metric-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.budget-metric-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+.budget-metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+.budget-metric-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 0.15rem;
+}
+.budget-metric-value {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+/* ── Progress Track & Fill ────────────────────────────── */
+.budget-progress-track {
+    background: #f1f5f9;
+    border-radius: 99px;
+    height: 10px;
+    overflow: hidden;
+}
+.budget-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    width: 0%;                 /* animated via JS */
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+}
+.fill-success { background: linear-gradient(90deg, #16a34a, #4ade80); }
+.fill-warning { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.fill-danger  { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+/* ── Overspending Alert Banner ─────────────────────────── */
+.alert-overspent-banner {
+    background: linear-gradient(135deg, #fef2f2 0%, #fff1f1 100%);
+    border: 1.5px solid #fecaca;
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+}
+.alert-icon-box {
+    width: 40px;
+    height: 40px;
+    background: #dc2626;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+}
+
+/* ── Budget Category Cards ─────────────────────────────── */
+.budget-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    transition: box-shadow 0.25s, transform 0.25s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.budget-card:hover {
+    box-shadow: 0 12px 32px rgba(0,0,0,0.09);
+    transform: translateY(-3px);
+}
+
+/* Status border accents */
+.budget-card-success { border-color: #bbf7d0; }
+.budget-card-warning { border-color: #fde68a; }
+.budget-card-danger  { border-color: #fecaca; }
+
+.budget-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: .5rem;
+}
+
+.budget-cat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.cat-success { background: #dcfce7; color: #16a34a; }
+.cat-warning { background: #fef9c3; color: #ca8a04; }
+.cat-danger  { background: #fee2e2; color: #dc2626; }
+
+.budget-card-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #0f172a;
+    line-height: 1.2;
+}
+.budget-card-period {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.1rem;
+}
+
+/* Status pill badges */
+.budget-status-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 99px;
+    white-space: nowrap;
+}
+.pill-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.pill-warning { background: #fef9c3; color: #92400e; border: 1px solid #fde68a; }
+.pill-danger  { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* Doughnut micro-chart container */
+.budget-doughnut-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+}
+.budget-doughnut-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.budget-doughnut-label span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.budget-card-notes {
+    font-size: 0.78rem;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.75rem;
+    border: 1px solid #e2e8f0;
+    flex-grow: 1;
+}
+
+/* Edit / Delete action row */
+.budget-card-actions {
+    display: flex;
+    gap: 0.65rem;
+    margin-top: 1.1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid #f1f5f9;
+}
+.budget-action-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.18s;
+    border: 1.5px solid #e2e8f0;
+    color: #475569;
+}
+.budget-action-btn.btn-edit:hover  { border-color: #7c3aed; color: #7c3aed; background: #f5f3ff; }
+.budget-action-btn.btn-delete:hover { border-color: #ef4444; color: #ef4444; background: #fef2f2; }
+
+/* ── Empty State ──────────────────────────────────────── */
+.budget-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: #ffffff;
+    border: 1.5px dashed #c7d2fe;
+    border-radius: 20px;
+}
+.budget-empty-icon {
+    width: 72px;
+    height: 72px;
+    background: #ede9fe;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: #7c3aed;
+    margin: 0 auto 1.25rem;
+}
+
+/* ── Responsive Mobile Adjustments ────────────────────── */
+@media (max-width: 575px) {
+    .budget-metric-value { font-size: 1.2rem; }
+    .month-grid  { grid-template-columns: repeat(3, 1fr); }
+    .cat-grid    { grid-template-columns: repeat(4, 1fr); }
+}

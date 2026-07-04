@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - {% if form.instance.pk %}Edit Budget{% else %}New Budget{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/auth.css' %}" rel="stylesheet">
+<link href="{% static 'css/budgets.css' %}" rel="stylesheet">
+<style>
+    /* Budget form card — purple accent matching wallet icon */
+    .budget-form-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04), 0 1px 8px rgba(0,0,0,0.02);
+        width: 100%;
+        max-width: 540px;
+        padding: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(226,232,240,0.8);
+    }
+    .budget-form-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #7c3aed 0%, #3b2cd4 50%, #06b6d4 100%);
+    }
+    .card-close-btn {
+        position: absolute;
+        top: 1.5rem; right: 1.5rem;
+        color: #94a3b8; font-size: 1.25rem;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .card-close-btn:hover { color: #ef4444; }
+
+    /* Month grid — clickable pill selectors */
+    .month-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+    .month-pill {
+        padding: 0.45rem 0;
+        text-align: center;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border-radius: 8px;
+        border: 1.5px solid #e2e8f0;
+        background: #f8fafc;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.18s;
+        user-select: none;
+    }
+    .month-pill:hover { border-color: #7c3aed; color: #7c3aed; background: #f5f3ff; }
+    .month-pill.selected { border-color: #7c3aed; background: #ede9fe; color: #6d28d9; }
+
+    /* Category icon grid */
+    .cat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+    .cat-pill {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.65rem 0.25rem;
+        border-radius: 12px;
+        border: 1.5px solid #e2e8f0;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 0.7rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s;
+        user-select: none;
+    }
+    .cat-pill i { font-size: 1.1rem; }
+    .cat-pill:hover { border-color: #7c3aed; color: #7c3aed; background: #f5f3ff; }
+    .cat-pill.selected { border-color: #7c3aed; background: #ede9fe; color: #6d28d9; }
+
+    .preview-bar-wrap { background: #f1f5f9; border-radius: 99px; height: 8px; overflow: hidden; }
+    .preview-bar-fill { height: 100%; background: linear-gradient(90deg,#7c3aed,#06b6d4); border-radius: 99px; transition: width 0.4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper" style="background-color:#f8fafc;">
+    <div class="budget-form-card">
+
+        <!-- Close button -->
+        <a href="{% url 'budget_list' %}" class="card-close-btn" title="Cancel">
+            <i class="fa-solid fa-xmark"></i>
+        </a>
+
+        <!-- Title -->
+        <h2 class="auth-title" style="text-align:left;margin-bottom:.25rem;">
+            {% if form.instance.pk %}Edit Budget{% else %}New Budget{% endif %}
+        </h2>
+        <p class="auth-subtitle" style="text-align:left;margin-bottom:2rem;">
+            {% if form.instance.pk %}Update this category spending limit.{% else %}Set a monthly spending limit for a category.{% endif %}
+        </p>
+
+        <form method="POST" id="budgetForm">
+            {% csrf_token %}
+
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger px-3 py-2 small mb-3">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- ── Category Grid Picker ── -->
+            <div class="mb-4">
+                <label class="form-label">Category</label>
+                <!-- Hidden actual select -->
+                <select name="category" id="id_category" class="d-none">
+                    {% for cat_val, cat_label in form.fields.category.choices %}
+                        <option value="{{ cat_val }}" {% if form.category.value == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+                    {% endfor %}
+                </select>
+                <div class="cat-grid" id="catGrid">
+                    <div class="cat-pill {% if form.category.value == 'housing' or not form.category.value %}selected{% endif %}" data-value="housing">
+                        <i class="fa-solid fa-house-chimney"></i><span>Housing</span>
+                    </div>
+                    <div class="cat-pill {% if form.category.value == 'food_groceries' %}selected{% endif %}" data-value="food_groceries">
+                        <i class="fa-solid fa-basket-shopping"></i><span>Groceries</span>
+                    </div>
+                    <div class="cat-pill {% if form.category.value == 'entertainment' %}selected{% endif %}" data-value="entertainment">
+                        <i class="fa-solid fa-gamepad"></i><span>Fun</span>
+                    </div>
+                    <div class="cat-pill {% if form.category.value == 'utilities' %}selected{% endif %}" data-value="utilities">
+                        <i class="fa-solid fa-lightbulb"></i><span>Utilities</span>
+                    </div>
+                    <div class="cat-pill {% if form.category.value == 'shopping' %}selected{% endif %}" data-value="shopping">
+                        <i class="fa-solid fa-bag-shopping"></i><span>Shopping</span>
+                    </div>
+                    <div class="cat-pill {% if form.category.value == 'technology' %}selected{% endif %}" data-value="technology">
+                        <i class="fa-solid fa-laptop"></i><span>Tech</span>
+                    </div>
+                    <div class="cat-pill {% if form.category.value == 'dining' %}selected{% endif %}" data-value="dining">
+                        <i class="fa-solid fa-utensils"></i><span>Dining</span>
+                    </div>
+                    <div class="cat-pill {% if form.category.value == 'other' %}selected{% endif %}" data-value="other">
+                        <i class="fa-solid fa-coins"></i><span>Other</span>
+                    </div>
+                </div>
+                {% if form.category.errors %}
+                    <div class="text-danger small mt-1">{{ form.category.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- ── Budget Limit ── -->
+            <div class="mb-4">
+                <label for="id_limit" class="form-label">Monthly Limit</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-secondary border-end-0 fw-bold" style="border-radius:10px 0 0 10px;">$</span>
+                    <input type="number" name="limit" step="0.01" min="0.01"
+                           class="form-control border-start-0{% if form.limit.errors %} is-invalid{% endif %}"
+                           id="id_limit"
+                           placeholder="500.00"
+                           value="{{ form.limit.value|default:'' }}"
+                           style="border-radius:0 10px 10px 0;"
+                           required>
+                    {% if form.limit.errors %}
+                        <div class="invalid-feedback">{{ form.limit.errors|first }}</div>
+                    {% endif %}
+                </div>
+                <!-- Live preview bar -->
+                <div class="mt-2">
+                    <div class="preview-bar-wrap">
+                        <div class="preview-bar-fill" id="limitPreviewBar" style="width:60%;"></div>
+                    </div>
+                    <p class="text-muted mt-1" style="font-size:.72rem;">This will be your spending ceiling for the selected category and month.</p>
+                </div>
+            </div>
+
+            <!-- ── Month / Year Row ── -->
+            <div class="row g-3 mb-4">
+                <div class="col-8">
+                    <label class="form-label">Month</label>
+                    <!-- Hidden actual select -->
+                    <select name="month" id="id_month" class="d-none">
+                        {% for m_val, m_name in form.fields.month.choices %}
+                            <option value="{{ m_val }}" {% if form.month.value == m_val %}selected{% endif %}>{{ m_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="month-grid" id="monthGrid">
+                        {% for m_val, m_name in form.fields.month.choices %}
+                        <div class="month-pill {% if form.month.value == m_val %}selected{% endif %}"
+                             data-value="{{ m_val }}">{{ m_name|slice:":3" }}</div>
+                        {% endfor %}
+                    </div>
+                    {% if form.month.errors %}
+                        <div class="text-danger small mt-1">{{ form.month.errors|first }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-4">
+                    <label for="id_year" class="form-label">Year</label>
+                    {{ form.year }}
+                    {% if form.year.errors %}
+                        <div class="text-danger small mt-1">{{ form.year.errors|first }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ── Notes ── -->
+            <div class="mb-4">
+                <label for="id_notes" class="form-label">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                    <div class="text-danger small mt-1">{{ form.notes.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- ── Action Buttons ── -->
+            <div class="d-flex justify-content-end gap-3 mt-4">
+                <a href="{% url 'budget_list' %}" class="btn btn-outline-secondary" style="border-radius:10px;font-weight:600;padding:.75rem 1.5rem;">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-auth-primary" style="width:auto;padding:.75rem 2rem;background:linear-gradient(135deg,#7c3aed 0%,#3b2cd4 100%);border-color:#7c3aed;">
+                    {% if form.instance.pk %}Update Budget{% else %}Create Budget{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ── Category grid picker ──────────────────────────────────────────────
+    const catPills = document.querySelectorAll('#catGrid .cat-pill');
+    const catSelect = document.querySelector('#id_category');
+    catPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            catPills.forEach(p => p.classList.remove('selected'));
+            pill.classList.add('selected');
+            if (catSelect) catSelect.value = pill.dataset.value;
+        });
+    });
+    // Sync on load
+    if (catSelect && catSelect.value) {
+        catPills.forEach(p => p.classList.remove('selected'));
+        const active = document.querySelector(`#catGrid .cat-pill[data-value="${catSelect.value}"]`);
+        if (active) active.classList.add('selected');
+    }
+
+    // ── Month grid picker ─────────────────────────────────────────────────
+    const monthPills = document.querySelectorAll('#monthGrid .month-pill');
+    const monthSelect = document.querySelector('#id_month');
+    monthPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            monthPills.forEach(p => p.classList.remove('selected'));
+            pill.classList.add('selected');
+            if (monthSelect) monthSelect.value = pill.dataset.value;
+        });
+    });
+    // Sync on load
+    if (monthSelect && monthSelect.value) {
+        monthPills.forEach(p => p.classList.remove('selected'));
+        const active = document.querySelector(`#monthGrid .month-pill[data-value="${monthSelect.value}"]`);
+        if (active) active.classList.add('selected');
+    }
+
+    // ── Limit preview bar animation ───────────────────────────────────────
+    const limitInput = document.querySelector('#id_limit');
+    const previewBar = document.querySelector('#limitPreviewBar');
+    if (limitInput && previewBar) {
+        limitInput.addEventListener('input', function () {
+            const val = parseFloat(this.value) || 0;
+            // Scale bar: 0 → $5000+ = 100%
+            const pct = Math.min((val / 5000) * 100, 100);
+            previewBar.style.width = pct + '%';
+        });
+    }
+});
+</script>
+{% endblock %}

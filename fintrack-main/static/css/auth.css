@@ -1,0 +1,341 @@
+/* Custom Premium Stylesheet for FinTrack Auth Module */
+
+/* Font & Global Styles */
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: #eef2f6;
+    background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,0) 0, transparent 50%),
+                      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.05) 0, transparent 50%),
+                      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.03) 0, transparent 50%);
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+/* Auth Card Wrapper */
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 8px rgba(0, 0, 0, 0.02);
+    width: 100%;
+    max-width: 480px;
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* Gradient accent bar on top of the card */
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b2cd4 0%, #06b6d4 100%);
+}
+
+/* Header & Logo styling */
+.auth-logo-box {
+    width: 44px;
+    height: 44px;
+    background-color: #3b2cd4;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.25rem;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 10px rgba(59, 44, 212, 0.3);
+}
+
+.auth-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e1b4b;
+    text-align: center;
+    margin-bottom: 0.25rem;
+}
+
+.auth-subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Form Controls (Inputs) */
+.form-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #475569;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    background-color: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    color: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    background-color: #ffffff;
+    border-color: #3b2cd4;
+    box-shadow: 0 0 0 3px rgba(59, 44, 212, 0.1);
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+}
+
+/* Password eye wrap */
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #64748b;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.password-toggle-icon:hover {
+    color: #3b2cd4;
+}
+
+/* Helper texts */
+.form-helper {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+.form-helper.valid {
+    color: #10b981;
+}
+
+/* Checkbox alignment */
+.form-check {
+    display: flex;
+    align-items: center;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-check-input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0;
+    border-radius: 4px;
+    border: 1.5px solid #cbd5e1;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: #3b2cd4;
+    border-color: #3b2cd4;
+}
+
+.form-check-label {
+    font-size: 0.85rem;
+    color: #475569;
+    padding-left: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Action Button */
+.btn-auth-primary {
+    background-color: #3b2cd4;
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(59, 44, 212, 0.2);
+}
+
+.btn-auth-primary:hover {
+    background-color: #2b1eb4;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 44, 212, 0.3);
+}
+
+.btn-auth-primary:active {
+    transform: translateY(0);
+}
+
+/* Social Register Separator */
+.social-separator {
+    text-align: center;
+    margin: 2rem 0 1.5rem;
+    position: relative;
+}
+
+.social-separator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e2e8f0;
+    z-index: 1;
+}
+
+.social-separator span {
+    background-color: #ffffff;
+    padding: 0 0.75rem;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    position: relative;
+    z-index: 2;
+}
+
+/* Social Button options */
+.social-buttons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.btn-social {
+    background-color: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    color: #334155;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.65rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.btn-social:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+/* Card Links Footer */
+.auth-footer-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.auth-footer-links a {
+    color: #3b2cd4;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-footer-links a:hover {
+    text-decoration: underline;
+}
+
+/* Bottom Outer Links */
+.outer-footer-links {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.outer-footer-links a {
+    color: #94a3b8;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.outer-footer-links a:hover {
+    color: #64748b;
+}
+
+/* Alerts and Django Messages wrapper */
+.messages-container {
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 1rem;
+}
+
+.alert {
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    border: none;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+}
+
+.alert-success {
+    background-color: #ecfdf5;
+    color: #065f46;
+}
+
+.alert-danger {
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+.alert-info {
+    background-color: #eff6ff;
+    color: #1e40af;
+}
+
+/* Password error list override */
+.errorlist {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    color: #ef4444;
+}
+
+.errorlist li {
+    margin-top: 0.25rem;
+}

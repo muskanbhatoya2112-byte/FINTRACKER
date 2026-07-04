@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Expense History{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+<style>
+    /* Styling to support responsive mobile sidebar toggle */
+    .mobile-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        display: none;
+    }
+    .mobile-backdrop.show {
+        display: block;
+    }
+    .btn-action-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        background-color: #ffffff;
+        transition: all 0.2s;
+    }
+    .btn-action-icon:hover {
+        background-color: #f8fafc;
+    }
+    .btn-action-edit:hover {
+        color: #3b2cd4;
+        border-color: #3b2cd4;
+    }
+    .btn-action-delete:hover {
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+    .filter-bar {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+    }
+    .receipt-link {
+        color: #3b2cd4;
+        font-size: 1.1rem;
+        transition: color 0.2s;
+    }
+    .receipt-link:hover {
+        color: #2b1eb4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="mobile-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Sidebar Panel (Screenshot 4 Left) -->
+    <aside class="sidebar" id="dashboardSidebar">
+        <a href="{% url 'landing' %}" class="sidebar-logo">
+            <div class="sidebar-logo-icon">
+                <i class="fa-solid fa-box-open"></i>
+            </div>
+            <span class="sidebar-logo-text">FinTrack</span>
+        </a>
+
+        <!-- Sidebar Navigation -->
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{% url 'dashboard' %}" class="sidebar-link">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="#" class="sidebar-link active">
+                    <i class="fa-solid fa-credit-card"></i> Expenses
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'income_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Earnings
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'budget_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-wallet"></i> Budgets
+                </a>
+            </li>
+            <li>
+                <a href="#" class="sidebar-link">
+                    <i class="fa-solid fa-chart-line"></i> Reports
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'change_password' %}" class="sidebar-link">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+
+        <!-- Upgrade to Pro Card -->
+        <div class="sidebar-banner">
+            <h4 class="sidebar-banner-title">Upgrade to Pro</h4>
+            <p class="sidebar-banner-text">Get advanced insights, custom alerts, and unlimited reports.</p>
+            <button class="btn btn-sidebar-banner">Unlock Now</button>
+        </div>
+    </aside>
+
+    <!-- Main Section (Screenshot 4 Center) -->
+    <main class="main-content">
+        
+        <!-- Header Navbar (Search, Notifications, Profile) -->
+        <header class="main-header">
+            <div class="d-flex align-items-center gap-3">
+                <button class="mobile-header-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="navbarSearchInput" placeholder="Search transactions...">
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-notification" aria-label="View notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+                
+                <!-- Dropdown profile menu -->
+                <div class="dropdown">
+                    <div class="user-profile-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="avatar-icon">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        <div class="profile-info d-none d-sm-block">
+                            <h5 class="profile-name">{{ user.full_name|default:user.username }}</h5>
+                            <p class="profile-role">Premium Account</p>
+                        </div>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2" style="border-radius: 12px; font-size: 0.9rem;">
+                        <li class="px-3 py-2 border-bottom">
+                            <span class="text-muted d-block small">Logged in as</span>
+                            <strong>{{ user.email }}</strong>
+                        </li>
+                        <li><a class="dropdown-menu-item dropdown-item py-2 px-3 mt-1" href="{% url 'change_password' %}"><i class="fa-solid fa-key text-muted me-2"></i> Change Password</a></li>
+                        <li><a class="dropdown-menu-item dropdown-item py-2 px-3 text-danger" href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Log Out</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Message Alerts -->
+        {% if messages %}
+        <div class="row mb-4">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'success' %}
+                        <i class="fa-solid fa-circle-check"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    {% else %}
+                        <i class="fa-solid fa-circle-info"></i>
+                    {% endif %}
+                    <div>{{ message }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Heading Row -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="fw-bold text-dark mb-1" style="font-size: 1.75rem;">Expense History</h1>
+                <p class="text-secondary mb-0" style="font-size: 0.95rem;">Review and manage your detailed transaction history.</p>
+            </div>
+            <div>
+                <a href="{% url 'expense_create' %}" class="btn btn-auth-primary d-flex align-items-center gap-2 text-decoration-none" style="width: auto; padding: 0.65rem 1.25rem; color: #ffffff;">
+                    <i class="fa-solid fa-plus"></i> Add Expense
+                </a>
+            </div>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="filter-bar mb-4">
+            <form method="GET" class="row g-3 align-items-center" id="filterForm">
+                <!-- Search term -->
+                <div class="col-12 col-md-6 col-lg-5">
+                    <label for="q" class="form-label mb-1">Search Merchant / Name</label>
+                    <div class="position-relative">
+                        <input type="text" name="q" id="q" class="form-control" placeholder="Search by merchant name or description..." value="{{ search_query }}">
+                    </div>
+                </div>
+
+                <!-- Category dropdown -->
+                <div class="col-12 col-md-4 col-lg-4">
+                    <label for="category" class="form-label mb-1">Category Filter</label>
+                    <select name="category" id="category" class="form-select" onchange="document.getElementById('filterForm').submit();">
+                        <option value="all" {% if selected_category == 'all' %}selected{% endif %}>All Categories</option>
+                        {% for cat_val, cat_label in categories %}
+                            <option value="{{ cat_val }}" {% if selected_category == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Reset button & search trigger -->
+                <div class="col-12 col-md-2 col-lg-3 d-flex gap-2 align-self-end">
+                    <button type="submit" class="btn btn-auth-primary py-2" style="font-size: 0.85rem;">Filter</button>
+                    {% if search_query or selected_category != 'all' %}
+                        <a href="{% url 'expense_list' %}" class="btn btn-outline-secondary py-2" style="font-size: 0.85rem; border-radius: 10px;">Reset</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Expenses Table List -->
+        <div class="chart-card p-0 mb-4">
+            <div class="table-responsive">
+                <table class="table transactions-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Merchant</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Receipt</th>
+                            <th>Actions</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in expenses %}
+                        <tr>
+                            <td>
+                                <div class="transaction-name-cell">
+                                    <div class="transaction-icon-box {% if exp.category == 'technology' %}icon-tech{% elif exp.category == 'dining' %}icon-dining{% else %}icon-tech{% endif %}" style="background-color: #f1f5f9; color: #475569;">
+                                        {% if exp.category == 'housing' %}
+                                            <i class="fa-solid fa-house-chimney"></i>
+                                        {% elif exp.category == 'food_groceries' %}
+                                            <i class="fa-solid fa-basket-shopping"></i>
+                                        {% elif exp.category == 'entertainment' %}
+                                            <i class="fa-solid fa-gamepad"></i>
+                                        {% elif exp.category == 'utilities' %}
+                                            <i class="fa-solid fa-lightbulb"></i>
+                                        {% elif exp.category == 'shopping' %}
+                                            <i class="fa-solid fa-bag-shopping"></i>
+                                        {% elif exp.category == 'technology' %}
+                                            <i class="fa-solid fa-laptop"></i>
+                                        {% elif exp.category == 'dining' %}
+                                            <i class="fa-solid fa-utensils"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-receipt"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <span>{{ exp.title }}</span>
+                                        {% if exp.description %}
+                                            <span class="text-muted small fw-normal">{{ exp.description|truncatechars:45 }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted small fw-medium">{{ exp.get_category_display }}</span>
+                            </td>
+                            <td>
+                                <span class="text-muted small">{{ exp.date }}</span>
+                            </td>
+                            <td>
+                                {% if exp.receipt %}
+                                    <a href="{{ exp.receipt.url }}" target="_blank" class="receipt-link" title="View attached receipt">
+                                        <i class="fa-solid fa-paperclip"></i>
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'expense_edit' exp.pk %}" class="btn-action-icon btn-action-edit" title="Edit expense">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </a>
+                                    <a href="{% url 'expense_delete' exp.pk %}" class="btn-action-icon btn-action-delete" title="Delete expense">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <span class="amount-expense fw-bold text-dark">-${{ exp.amount|floatformat:2 }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted mb-3">
+                                    <i class="fa-solid fa-receipt fs-1 text-light"></i>
+                                </div>
+                                <h5 class="fw-semibold">No expenses found</h5>
+                                <p class="text-secondary small mb-3">Log your spending by clicking the button below.</p>
+                                <a href="{% url 'expense_create' %}" class="btn btn-auth-primary py-2 px-4" style="width: auto; display: inline-flex;">Log Your First Expense</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Entries count indicators and pagination controls -->
+            {% if is_paginated %}
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center px-4 py-3 border-top gap-3">
+                <div class="text-muted small fw-medium">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} entries
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <!-- Previous Page -->
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+
+                        <!-- Page numbers list -->
+                        {% for num in paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link" style="background-color: #3b2cd4; border-color: #3b2cd4;">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Next Page -->
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+
+    </main>
+</div>
+
+<!-- Scripts for sidebar controls -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Toggle mobile sidebar view drawer
+        const sidebarToggle = document.querySelector('#sidebarToggle');
+        const dashboardSidebar = document.querySelector('#dashboardSidebar');
+        const sidebarBackdrop = document.querySelector('#sidebarBackdrop');
+
+        if (sidebarToggle && dashboardSidebar && sidebarBackdrop) {
+            sidebarToggle.addEventListener('click', function () {
+                dashboardSidebar.classList.toggle('show');
+                sidebarBackdrop.classList.toggle('show');
+            });
+            
+            sidebarBackdrop.addEventListener('click', function () {
+                dashboardSidebar.classList.remove('show');
+                sidebarBackdrop.classList.remove('show');
+            });
+        }
+        
+        // Sync search input at header navbar to form field in card
+        const navbarSearch = document.querySelector('#navbarSearchInput');
+        const queryInput = document.querySelector('#q');
+        const filterForm = document.querySelector('#filterForm');
+        
+        if (navbarSearch && queryInput && filterForm) {
+            navbarSearch.value = queryInput.value;
+            navbarSearch.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    queryInput.value = this.value;
+                    filterForm.submit();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

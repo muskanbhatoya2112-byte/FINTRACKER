@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - {% if form.instance.pk %}Edit Income{% else %}Log Income{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/auth.css' %}" rel="stylesheet">
+<style>
+    /* Income form card — mirrors the expense card style with a green accent */
+    .income-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 8px rgba(0, 0, 0, 0.02);
+        width: 100%;
+        max-width: 520px;
+        padding: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    /* Top color accent bar — green for income */
+    .income-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #16a34a 0%, #06b6d4 100%);
+    }
+    /* Close button top-right corner */
+    .card-close-btn {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        color: #94a3b8;
+        font-size: 1.25rem;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .card-close-btn:hover {
+        color: #ef4444;
+    }
+    /* Category chip selection buttons */
+    .category-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    .category-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 99px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid #e2e8f0;
+        background: #f8fafc;
+        color: #475569;
+        transition: all 0.18s;
+        user-select: none;
+    }
+    .category-chip:hover {
+        border-color: #16a34a;
+        color: #16a34a;
+        background: #f0fdf4;
+    }
+    .category-chip.selected {
+        border-color: #16a34a;
+        background: #f0fdf4;
+        color: #15803d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper" style="background-color: #f8fafc;">
+    <div class="income-card">
+
+        <!-- Cancel / Close button -->
+        <a href="{% url 'income_list' %}" class="card-close-btn" title="Cancel">
+            <i class="fa-solid fa-xmark"></i>
+        </a>
+
+        <!-- Page header text -->
+        <h2 class="auth-title" style="text-align: left; margin-bottom: 0.25rem;">
+            {% if form.instance.pk %}Edit Income{% else %}Log Income{% endif %}
+        </h2>
+        <p class="auth-subtitle" style="text-align: left; margin-bottom: 2rem;">
+            {% if form.instance.pk %}Update this earnings record.{% else %}Record a new income source or payment received.{% endif %}
+        </p>
+
+        <!-- Income Form -->
+        <form method="POST" id="incomeForm">
+            {% csrf_token %}
+
+            <!-- Non-field validation errors -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger px-3 py-2 small">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Source / Title field -->
+            <div class="mb-3">
+                <label for="id_title" class="form-label">Source / Name</label>
+                <input
+                    type="text"
+                    name="title"
+                    id="id_title"
+                    class="form-control{% if form.title.errors %} is-invalid{% endif %}"
+                    placeholder="e.g. Monthly Salary, Freelance Project..."
+                    value="{{ form.title.value|default:'' }}"
+                    required
+                >
+                {% if form.title.errors %}
+                    <div class="invalid-feedback">{{ form.title.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Amount field -->
+            <div class="mb-3">
+                <label for="id_amount" class="form-label">Amount</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light text-secondary border-end-0 fw-bold" style="border-radius: 10px 0 0 10px;">$</span>
+                    <input
+                        type="number"
+                        name="amount"
+                        step="0.01"
+                        min="0.01"
+                        class="form-control border-start-0{% if form.amount.errors %} is-invalid{% endif %}"
+                        id="id_amount"
+                        placeholder="0.00"
+                        value="{{ form.amount.value|default:'' }}"
+                        style="border-radius: 0 10px 10px 0;"
+                        required
+                    >
+                    {% if form.amount.errors %}
+                        <div class="invalid-feedback">{{ form.amount.errors|first }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Category chips selection -->
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                <!-- Hidden select input for actual form submission -->
+                <select name="category" id="id_category" class="d-none">
+                    {% for cat_val, cat_label in form.fields.category.choices %}
+                        <option value="{{ cat_val }}" {% if form.category.value == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+                    {% endfor %}
+                </select>
+                <!-- Visual chip buttons -->
+                <div class="category-chips" id="categoryChips">
+                    <div class="category-chip {% if form.category.value == 'salary' or not form.category.value %}selected{% endif %}" data-value="salary">
+                        <i class="fa-solid fa-briefcase"></i> Salary
+                    </div>
+                    <div class="category-chip {% if form.category.value == 'freelance' %}selected{% endif %}" data-value="freelance">
+                        <i class="fa-solid fa-laptop-code"></i> Freelance
+                    </div>
+                    <div class="category-chip {% if form.category.value == 'investments' %}selected{% endif %}" data-value="investments">
+                        <i class="fa-solid fa-chart-line"></i> Investments
+                    </div>
+                    <div class="category-chip {% if form.category.value == 'business' %}selected{% endif %}" data-value="business">
+                        <i class="fa-solid fa-store"></i> Business
+                    </div>
+                    <div class="category-chip {% if form.category.value == 'other' %}selected{% endif %}" data-value="other">
+                        <i class="fa-solid fa-coins"></i> Other
+                    </div>
+                </div>
+                {% if form.category.errors %}
+                    <div class="text-danger small mt-1">{{ form.category.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Date picker field -->
+            <div class="mb-3">
+                <label for="id_date" class="form-label">Date Received</label>
+                {{ form.date }}
+                {% if form.date.errors %}
+                    <div class="text-danger small mt-1">{{ form.date.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Description / notes field -->
+            <div class="mb-4">
+                <label for="id_description" class="form-label">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="text-danger small mt-1">{{ form.description.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Action buttons -->
+            <div class="d-flex justify-content-end gap-3 mt-4">
+                <a href="{% url 'income_list' %}" class="btn btn-outline-secondary" style="border-radius: 10px; font-weight: 600; padding: 0.75rem 1.5rem;">
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-auth-primary" style="width: auto; padding: 0.75rem 2rem; background: linear-gradient(135deg, #16a34a 0%, #06b6d4 100%); border-color: #16a34a;">
+                    {% if form.instance.pk %}Update Income{% else %}Log Income{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Category chip interactivity script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const chips = document.querySelectorAll('#categoryChips .category-chip');
+        const hiddenSelect = document.querySelector('#id_category');
+
+        chips.forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                // Remove selected state from all chips
+                chips.forEach(function (c) { c.classList.remove('selected'); });
+                // Mark clicked chip selected
+                chip.classList.add('selected');
+                // Sync hidden select value
+                if (hiddenSelect) {
+                    hiddenSelect.value = chip.getAttribute('data-value');
+                }
+            });
+        });
+
+        // Sync initial chip state based on hidden select current value on page load
+        if (hiddenSelect && hiddenSelect.value) {
+            chips.forEach(function (c) { c.classList.remove('selected'); });
+            const activeChip = document.querySelector('#categoryChips .category-chip[data-value="' + hiddenSelect.value + '"]');
+            if (activeChip) activeChip.classList.add('selected');
+        }
+    });
+</script>
+{% endblock %}

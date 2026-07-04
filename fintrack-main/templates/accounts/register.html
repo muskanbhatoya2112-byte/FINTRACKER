@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Create Account{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/auth.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <!-- Messages Notification Alerts -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            {% if message.tags == 'success' %}
+                <i class="fa-solid fa-circle-check"></i>
+            {% elif message.tags == 'error' %}
+                <i class="fa-solid fa-circle-exclamation"></i>
+            {% else %}
+                <i class="fa-solid fa-circle-info"></i>
+            {% endif %}
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="auth-card">
+        <!-- Logo Header -->
+        <div class="auth-logo-box">
+            <i class="fa-solid fa-box-open"></i>
+        </div>
+        <h2 class="auth-title">FinTrack</h2>
+        <p class="auth-subtitle">Start your premium financial journey.</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger px-3 py-2 small">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Full Name Field -->
+            <div class="mb-3">
+                <label for="full_name" class="form-label">Full Name</label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.full_name.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Email Field -->
+            <div class="mb-3">
+                <label for="email" class="form-label">Work Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="text-danger small mt-1">{{ form.email.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Username Field -->
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="text-danger small mt-1">{{ form.username.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Password Field -->
+            <div class="mb-3">
+                <label for="password1" class="form-label">Password</label>
+                <div class="password-input-wrapper">
+                    {{ form.password1 }}
+                    <i class="fa-regular fa-eye password-toggle-icon" id="togglePassword1"></i>
+                </div>
+                <!-- Password validation indicator matching the mockup exactly -->
+                <div class="form-helper" id="passwordHint">Min 8 Chars</div>
+                {% if form.password1.errors %}
+                    <div class="text-danger small mt-1">{{ form.password1.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Confirm Password Field -->
+            <div class="mb-3">
+                <label for="password2" class="form-label">Confirm Password</label>
+                <div class="password-input-wrapper">
+                    {{ form.password2 }}
+                    <i class="fa-regular fa-eye password-toggle-icon" id="togglePassword2"></i>
+                </div>
+                {% if form.password2.errors %}
+                    <div class="text-danger small mt-1">{{ form.password2.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Terms and Privacy Checkbox -->
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                <label class="form-check-label" for="termsCheck">
+                    I agree to the <a href="#" class="text-decoration-none" style="color: #3b2cd4;">Terms of Service</a> and <a href="#" class="text-decoration-none" style="color: #3b2cd4;">Privacy Policy</a>.
+                </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-auth-primary">
+                Create Account <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <!-- Social Separator -->
+        <div class="social-separator">
+            <span>Or register with</span>
+        </div>
+
+        <!-- Social Buttons Grid -->
+        <div class="social-buttons-grid">
+            <button class="btn btn-social" type="button">
+                <i class="fa-brands fa-google text-danger"></i> Google
+            </button>
+            <button class="btn btn-social" type="button">
+                <i class="fa-brands fa-github text-dark"></i> GitHub
+            </button>
+        </div>
+
+        <!-- Footer link back to sign in -->
+        <div class="auth-footer-links">
+            Already have an account? <a href="{% url 'login' %}">Sign In</a>
+        </div>
+    </div>
+
+    <!-- Outer Footer Links -->
+    <div class="outer-footer-links">
+        <a href="#">Support</a>
+        <a href="#">Privacy</a>
+        <a href="#">Enterprise</a>
+    </div>
+</div>
+
+<!-- JavaScript for password show/hide and dynamic live validation check -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Toggle password reveal for Password field
+        const togglePassword1 = document.querySelector('#togglePassword1');
+        const passwordInput1 = document.querySelector('#password1');
+        if (togglePassword1 && passwordInput1) {
+            togglePassword1.addEventListener('click', function () {
+                const type = passwordInput1.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput1.setAttribute('type', type);
+                this.classList.toggle('fa-eye');
+                this.classList.toggle('fa-eye-slash');
+            });
+        }
+
+        // Toggle password reveal for Confirm Password field
+        const togglePassword2 = document.querySelector('#togglePassword2');
+        const passwordInput2 = document.querySelector('#password2');
+        if (togglePassword2 && passwordInput2) {
+            togglePassword2.addEventListener('click', function () {
+                const type = passwordInput2.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput2.setAttribute('type', type);
+                this.classList.toggle('fa-eye');
+                this.classList.toggle('fa-eye-slash');
+            });
+        }
+
+        // Dynamic visual password character-count validation
+        const passwordHint = document.querySelector('#passwordHint');
+        if (passwordInput1 && passwordHint) {
+            passwordInput1.addEventListener('input', function () {
+                if (this.value.length >= 8) {
+                    passwordHint.classList.add('valid');
+                    passwordHint.innerHTML = 'Min 8 Chars <i class="fa-solid fa-circle-check ms-1"></i>';
+                } else {
+                    passwordHint.classList.remove('valid');
+                    passwordHint.innerHTML = 'Min 8 Chars';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

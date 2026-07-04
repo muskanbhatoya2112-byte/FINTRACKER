@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Confirm Remove Income{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/auth.css' %}" rel="stylesheet">
+<style>
+    /* Shake animation on the danger icon to add emphasis */
+    @keyframes shake {
+        0%, 100% { transform: rotate(0deg); }
+        20% { transform: rotate(-8deg); }
+        40% { transform: rotate(8deg); }
+        60% { transform: rotate(-5deg); }
+        80% { transform: rotate(5deg); }
+    }
+    .icon-shake {
+        animation: shake 0.6s ease-in-out 0.4s;
+    }
+    /* Red pulse ring on danger logo box */
+    .auth-logo-box.bg-danger {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.12);
+    }
+    /* Income amount highlight badge */
+    .income-amount-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background-color: #f0fdf4;
+        border: 1.5px solid #bbf7d0;
+        color: #16a34a;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 0.4rem 1rem;
+        border-radius: 99px;
+        margin: 0.5rem 0 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper" style="background-color: #f8fafc;">
+    <div class="auth-card text-center" style="max-width: 440px;">
+
+        <!-- Danger icon header -->
+        <div class="auth-logo-box bg-danger icon-shake">
+            <i class="fa-regular fa-trash-can text-white"></i>
+        </div>
+
+        <h2 class="auth-title mt-3 text-danger">Remove Income Record?</h2>
+
+        <p class="auth-subtitle mb-1">
+            You are about to permanently delete the income entry:
+        </p>
+
+        <!-- Income record details pill -->
+        <p class="fw-semibold text-dark mb-1" style="font-size: 1rem;">
+            "{{ object.title }}"
+        </p>
+        <div class="d-flex justify-content-center">
+            <div class="income-amount-badge">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+                +${{ object.amount|floatformat:2 }}
+            </div>
+        </div>
+
+        <p class="text-danger small fw-semibold mt-3 mb-0">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>
+            This action cannot be undone.
+        </p>
+
+        <!-- Delete POST form -->
+        <form method="POST">
+            {% csrf_token %}
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="{% url 'income_list' %}" class="btn btn-outline-secondary" style="border-radius: 10px; font-weight: 600; padding: 0.75rem 1.5rem;">
+                    <i class="fa-solid fa-xmark me-1"></i> No, Cancel
+                </a>
+                <button type="submit" class="btn btn-danger" style="border-radius: 10px; font-weight: 600; padding: 0.75rem 1.5rem;">
+                    <i class="fa-regular fa-trash-can me-1"></i> Yes, Delete
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

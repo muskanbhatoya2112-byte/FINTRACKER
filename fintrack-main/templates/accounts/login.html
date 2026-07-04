@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Sign In{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/auth.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <!-- Messages Notification Alerts -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            {% if message.tags == 'success' %}
+                <i class="fa-solid fa-circle-check"></i>
+            {% elif message.tags == 'error' %}
+                <i class="fa-solid fa-circle-exclamation"></i>
+            {% else %}
+                <i class="fa-solid fa-circle-info"></i>
+            {% endif %}
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="auth-card">
+        <!-- Logo Header -->
+        <div class="auth-logo-box">
+            <i class="fa-solid fa-box-open"></i>
+        </div>
+        <h2 class="auth-title">FinTrack</h2>
+        <p class="auth-subtitle">Enter your credentials to access your dashboard.</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger px-3 py-2 small">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Email Address/Username Field -->
+            <div class="mb-3">
+                <label for="username" class="form-label">Email or Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="text-danger small mt-1">{{ form.username.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Password Field -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label for="password" class="form-label mb-0">Password</label>
+                    <a href="{% url 'forgot_password' %}" class="small text-decoration-none" style="font-size: 0.75rem; font-weight: 600; color: #3b2cd4;">Forgot password?</a>
+                </div>
+                <div class="password-input-wrapper">
+                    {{ form.password }}
+                    <i class="fa-regular fa-eye password-toggle-icon" id="togglePassword"></i>
+                </div>
+                {% if form.password.errors %}
+                    <div class="text-danger small mt-1">{{ form.password.errors|first }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Remember Me for 30 days Checkbox -->
+            <div class="form-check">
+                {{ form.remember_me }}
+                <label class="form-check-label" for="remember_me">
+                    Remember me for 30 days
+                </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-auth-primary">
+                Sign In <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <!-- Social Separator -->
+        <div class="social-separator">
+            <span>Or continue with</span>
+        </div>
+
+        <!-- Social Buttons Grid -->
+        <div class="social-buttons-grid">
+            <button class="btn btn-social" type="button">
+                <i class="fa-brands fa-google text-danger"></i> Google
+            </button>
+            <button class="btn btn-social" type="button">
+                <i class="fa-brands fa-apple text-dark"></i> Apple
+            </button>
+        </div>
+
+        <!-- Footer link back to register -->
+        <div class="auth-footer-links">
+            Don't have an account? <a href="{% url 'register' %}">Sign Up</a>
+        </div>
+    </div>
+
+    <!-- Outer Footer Links -->
+    <div class="outer-footer-links">
+        <a href="#">Support</a>
+        <a href="#">Privacy</a>
+        <a href="#">Enterprise</a>
+    </div>
+</div>
+
+<!-- JavaScript to handle show/hide password eye icon -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const togglePassword = document.querySelector('#togglePassword');
+        const passwordInput = document.querySelector('#password');
+        
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // Toggle between eye and eye-slash icons
+                if (this.classList.contains('fa-eye')) {
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

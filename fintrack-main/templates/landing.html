@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Take Control of Your Financial Future{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium landing page style overrides */
+    .navbar {
+        padding: 1rem 2rem;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .nav-brand-text {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #3b2cd4;
+        text-decoration: none;
+    }
+    .nav-link {
+        font-weight: 500;
+        color: #475569 !important;
+        margin: 0 0.5rem;
+        transition: color 0.2s;
+    }
+    .nav-link:hover, .nav-link.active {
+        color: #3b2cd4 !important;
+    }
+    .btn-get-started {
+        background-color: #3b2cd4;
+        color: #ffffff;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        transition: all 0.2s;
+    }
+    .btn-get-started:hover {
+        background-color: #2b1eb4;
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+    .btn-login-link {
+        font-weight: 600;
+        color: #1e1b4b;
+        text-decoration: none;
+        margin-right: 1.5rem;
+    }
+    .btn-login-link:hover {
+        color: #3b2cd4;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        padding: 5rem 1rem 3rem;
+        text-align: center;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    .badge-ai {
+        background-color: #eef2ff;
+        color: #4f46e5;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-bottom: 2rem;
+        border: 1px solid #cbd5e1;
+    }
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.15;
+        margin-bottom: 1.5rem;
+    }
+    .hero-title span {
+        color: #3b2cd4;
+        background: linear-gradient(90deg, #3b2cd4 0%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: #64748b;
+        line-height: 1.6;
+        max-width: 700px;
+        margin: 0 auto 2.5rem;
+    }
+    .hero-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 4rem;
+    }
+    .btn-hero-primary {
+        background-color: #3b2cd4;
+        color: white;
+        font-weight: 600;
+        padding: 0.85rem 2rem;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px rgba(59, 44, 212, 0.25);
+    }
+    .btn-hero-primary:hover {
+        background-color: #2b1eb4;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 44, 212, 0.35);
+    }
+    .btn-hero-secondary {
+        background-color: #ffffff;
+        color: #334155;
+        font-weight: 600;
+        padding: 0.85rem 2rem;
+        border-radius: 10px;
+        text-decoration: none;
+        border: 1.5px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+    .btn-hero-secondary:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+    }
+
+    /* Mock Interface Graphic */
+    .dashboard-preview-card {
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        overflow: hidden;
+    }
+    .preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        border-bottom: 1.5px solid #f1f5f9;
+        padding-bottom: 1rem;
+    }
+    .preview-dots {
+        display: flex;
+        gap: 6px;
+    }
+    .preview-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #e2e8f0;
+    }
+    .preview-dot-menu {
+        width: 20px;
+        height: 12px;
+        border-radius: 2px;
+        border-left: 2px solid #64748b;
+        border-right: 2px solid #64748b;
+    }
+    .chart-container {
+        height: 320px;
+        width: 100%;
+        position: relative;
+    }
+    
+    /* Notification Alerts in Fixed Top */
+    .toast-messages {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 1050;
+        width: 320px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container-fluid">
+        <a class="nav-brand-text" href="{% url 'landing' %}">FinTrack</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Pricing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Resources</a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                {% if user.is_authenticated %}
+                    <span class="me-3 text-secondary">Hello, <strong>{{ user.username }}</strong></span>
+                    <a class="btn-login-link" href="{% url 'dashboard' %}">Dashboard</a>
+                    <a class="btn btn-get-started" href="{% url 'logout' %}">Log Out</a>
+                {% else %}
+                    <a class="btn-login-link" href="{% url 'login' %}">Log In</a>
+                    <a class="btn btn-get-started" href="{% url 'register' %}">Get Started</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Message Toast Overlay -->
+{% if messages %}
+<div class="toast-messages">
+    {% for message in messages %}
+    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+        {% if message.tags == 'success' %}
+            <i class="fa-solid fa-circle-check"></i>
+        {% elif message.tags == 'error' %}
+            <i class="fa-solid fa-circle-exclamation"></i>
+        {% else %}
+            <i class="fa-solid fa-circle-info"></i>
+        {% endif %}
+        <div>{{ message }}</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Hero Content -->
+<div class="hero-section">
+    <div class="badge-ai">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> NEW: AI WEALTH ADVISOR
+    </div>
+    <h1 class="hero-title">
+        Take Control of Your<br><span>Financial Future</span>
+    </h1>
+    <p class="hero-subtitle">
+        Experience the next generation of personal finance. Track, invest, and grow your wealth with institutional-grade tools reimagined for everyone.
+    </p>
+    <div class="hero-actions">
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="btn-hero-primary">Go to Dashboard</a>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn-hero-primary">Start Free Trial</a>
+        {% endif %}
+        <a href="#" class="btn-hero-secondary">
+            <i class="fa-regular fa-circle-play"></i> See How it Works
+        </a>
+    </div>
+
+    <!-- UI Chart Graphic Mockup -->
+    <div class="dashboard-preview-card">
+        <div class="preview-header">
+            <div class="preview-dots">
+                <span class="preview-dot"></span>
+                <span class="preview-dot"></span>
+                <span class="preview-dot"></span>
+            </div>
+            <div>
+                <i class="fa-solid fa-chart-line text-muted"></i>
+            </div>
+        </div>
+        <div class="chart-container">
+            <!-- Inline SVG chart replicating Screenshot 2 chart mock -->
+            <svg width="100%" height="100%" viewBox="0 0 800 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Grid Lines -->
+                <line x1="50" y1="50" x2="750" y2="50" stroke="#f1f5f9" stroke-width="1.5" />
+                <line x1="50" y1="120" x2="750" y2="120" stroke="#f1f5f9" stroke-width="1.5" />
+                <line x1="50" y1="190" x2="750" y2="190" stroke="#f1f5f9" stroke-width="1.5" />
+                <line x1="50" y1="260" x2="750" y2="260" stroke="#cbd5e1" stroke-width="1.5" />
+                
+                <!-- Vertical grid guides -->
+                <line x1="120" y1="50" x2="120" y2="260" stroke="#f1f5f9" stroke-dasharray="4" />
+                <line x1="240" y1="50" x2="240" y2="260" stroke="#f1f5f9" stroke-dasharray="4" />
+                <line x1="360" y1="50" x2="360" y2="260" stroke="#f1f5f9" stroke-dasharray="4" />
+                <line x1="480" y1="50" x2="480" y2="260" stroke="#f1f5f9" stroke-dasharray="4" />
+                <line x1="600" y1="50" x2="600" y2="260" stroke="#f1f5f9" stroke-dasharray="4" />
+                <line x1="720" y1="50" x2="720" y2="260" stroke="#f1f5f9" stroke-dasharray="4" />
+
+                <!-- Bottom Year Labels -->
+                <text x="120" y="285" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">2020</text>
+                <text x="240" y="285" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">2021</text>
+                <text x="360" y="285" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">2022</text>
+                <text x="480" y="285" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">2023</text>
+                <text x="600" y="285" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">2024</text>
+                <text x="720" y="285" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">2025</text>
+
+                <!-- Teal Line Path -->
+                <path d="M 120,220 L 240,240 L 360,190 L 480,180 L 600,100 L 720,60" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" />
+                <!-- Dark Blue Line Path -->
+                <path d="M 120,160 L 240,210 L 360,230 L 480,150 L 600,210 L 720,90" fill="none" stroke="#3b2cd4" stroke-width="4.5" stroke-linecap="round" />
+
+                <!-- Data Dots Teal -->
+                <circle cx="120" cy="220" r="5" fill="#06b6d4" stroke="#ffffff" stroke-width="1.5" />
+                <circle cx="240" cy="240" r="5" fill="#06b6d4" stroke="#ffffff" stroke-width="1.5" />
+                <circle cx="360" cy="190" r="5" fill="#06b6d4" stroke="#ffffff" stroke-width="1.5" />
+                <circle cx="480" cy="180" r="5" fill="#06b6d4" stroke="#ffffff" stroke-width="1.5" />
+                <circle cx="600" cy="100" r="5" fill="#06b6d4" stroke="#ffffff" stroke-width="1.5" />
+                <circle cx="720" cy="60" r="5" fill="#06b6d4" stroke="#ffffff" stroke-width="1.5" />
+
+                <!-- Data Dots Dark Blue -->
+                <circle cx="120" cy="160" r="6" fill="#3b2cd4" stroke="#ffffff" stroke-width="2" />
+                <circle cx="240" cy="210" r="6" fill="#3b2cd4" stroke="#ffffff" stroke-width="2" />
+                <circle cx="360" cy="230" r="6" fill="#3b2cd4" stroke="#ffffff" stroke-width="2" />
+                <circle cx="480" cy="150" r="6" fill="#3b2cd4" stroke="#ffffff" stroke-width="2" />
+                <circle cx="600" cy="210" r="6" fill="#3b2cd4" stroke="#ffffff" stroke-width="2" />
+                <circle cx="720" cy="90" r="6" fill="#3b2cd4" stroke="#ffffff" stroke-width="2" />
+            </svg>
+        </div>
+    </div>
+</div>
+{% endblock %}

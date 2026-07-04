@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Budgets — {{ month_name }} {{ selected_year }}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+<link href="{% static 'css/budgets.css' %}" rel="stylesheet">
+<style>
+    .mobile-backdrop {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(15,23,42,0.4);
+        backdrop-filter: blur(4px);
+        z-index: 999; display: none;
+    }
+    .mobile-backdrop.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <div class="mobile-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- ═══════════════════════════ SIDEBAR ═══════════════════════════ -->
+    <aside class="sidebar" id="dashboardSidebar">
+        <a href="{% url 'landing' %}" class="sidebar-logo">
+            <div class="sidebar-logo-icon"><i class="fa-solid fa-box-open"></i></div>
+            <span class="sidebar-logo-text">FinTrack</span>
+        </a>
+
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{% url 'dashboard' %}" class="sidebar-link">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'expense_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-credit-card"></i> Expenses
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'income_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Earnings
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'budget_list' %}" class="sidebar-link active">
+                    <i class="fa-solid fa-wallet"></i> Budgets
+                </a>
+            </li>
+            <li>
+                <a href="#" class="sidebar-link">
+                    <i class="fa-solid fa-chart-line"></i> Reports
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'change_password' %}" class="sidebar-link">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-banner">
+            <h4 class="sidebar-banner-title">Upgrade to Pro</h4>
+            <p class="sidebar-banner-text">Get advanced insights, custom alerts, and unlimited reports.</p>
+            <button class="btn btn-sidebar-banner">Unlock Now</button>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════ MAIN CONTENT ═══════════════════════════ -->
+    <main class="main-content">
+
+        <!-- Header Navbar -->
+        <header class="main-header">
+            <div class="d-flex align-items-center gap-3">
+                <button class="mobile-header-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search budgets...">
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-notification" aria-label="Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+                <div class="dropdown">
+                    <div class="user-profile-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="avatar-icon">{{ user.username|slice:":1"|upper }}</div>
+                        <div class="profile-info d-none d-sm-block">
+                            <h5 class="profile-name">{{ user.full_name|default:user.username }}</h5>
+                            <p class="profile-role">Premium Account</p>
+                        </div>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2" style="border-radius:12px;font-size:.9rem;">
+                        <li class="px-3 py-2 border-bottom">
+                            <span class="text-muted d-block small">Logged in as</span>
+                            <strong>{{ user.email }}</strong>
+                        </li>
+                        <li><a class="dropdown-item py-2 px-3 mt-1" href="{% url 'change_password' %}"><i class="fa-solid fa-key text-muted me-2"></i>Change Password</a></li>
+                        <li><a class="dropdown-item py-2 px-3 text-danger" href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket me-2"></i>Log Out</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        {% if messages %}
+        <div class="row mb-3">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check me-2"></i>
+                    {% elif message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation me-2"></i>
+                    {% else %}<i class="fa-solid fa-circle-info me-2"></i>{% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Page Title Row -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="fw-bold text-dark mb-1" style="font-size:1.75rem;">
+                    <i class="fa-solid fa-wallet me-2" style="color:#3b2cd4;"></i>Budgets
+                </h1>
+                <p class="text-secondary mb-0" style="font-size:.95rem;">
+                    Monthly spending limits for {{ month_name }} {{ selected_year }}.
+                </p>
+            </div>
+            <a href="{% url 'budget_create' %}" class="btn btn-auth-primary d-flex align-items-center gap-2 text-decoration-none" style="width:auto;padding:.65rem 1.25rem;color:#fff;">
+                <i class="fa-solid fa-plus"></i> New Budget
+            </a>
+        </div>
+
+        <!-- Month / Year Filter Form -->
+        <div class="budget-filter-bar mb-4">
+            <form method="GET" class="d-flex flex-wrap align-items-center gap-3" id="monthFilterForm">
+                <div>
+                    <label class="form-label mb-1 small fw-semibold text-secondary">Month</label>
+                    <select name="month" class="form-select form-select-sm" style="width:140px;" onchange="document.getElementById('monthFilterForm').submit()">
+                        {% for m_val, m_name in months %}
+                            <option value="{{ m_val }}" {% if m_val == selected_month %}selected{% endif %}>{{ m_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label mb-1 small fw-semibold text-secondary">Year</label>
+                    <select name="year" class="form-select form-select-sm" style="width:100px;" onchange="document.getElementById('monthFilterForm').submit()">
+                        {% for yr in year_range %}
+                            <option value="{{ yr }}" {% if yr == selected_year %}selected{% endif %}>{{ yr }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="align-self-end">
+                    <button type="submit" class="btn btn-sm btn-auth-primary px-3">Apply</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ═══ Summary Metric Cards ═══ -->
+        <div class="row g-3 mb-4">
+            <!-- Total Budget Limit -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="budget-metric-card">
+                    <div class="budget-metric-icon" style="background:#ede9fe;color:#7c3aed;">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div>
+                        <div class="budget-metric-label">Total Budget</div>
+                        <div class="budget-metric-value">${{ total_limit|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Total Spent -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="budget-metric-card">
+                    <div class="budget-metric-icon" style="background:#fef3c7;color:#d97706;">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <div>
+                        <div class="budget-metric-label">Total Spent</div>
+                        <div class="budget-metric-value">${{ total_spent|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Remaining -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="budget-metric-card">
+                    <div class="budget-metric-icon" style="background:{% if total_remaining < 0 %}#fee2e2;color:#dc2626{% else %}#dcfce7;color:#16a34a{% endif %};">
+                        <i class="fa-solid fa-{% if total_remaining < 0 %}triangle-exclamation{% else %}piggy-bank{% endif %}"></i>
+                    </div>
+                    <div>
+                        <div class="budget-metric-label">Remaining</div>
+                        <div class="budget-metric-value {% if total_remaining < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {% if total_remaining < 0 %}-${{ total_remaining|floatformat:2|slice:"1:" }}{% else %}${{ total_remaining|floatformat:2 }}{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Alerts Count -->
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="budget-metric-card">
+                    <div class="budget-metric-icon" style="background:#fee2e2;color:#dc2626;">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div>
+                        <div class="budget-metric-label">Alerts</div>
+                        <div class="budget-metric-value text-danger">
+                            {{ overspent_count }} <span style="font-size:.85rem;font-weight:500;color:#64748b;">overspent</span>
+                        </div>
+                        {% if warning_count %}
+                        <div class="small text-warning fw-semibold">{{ warning_count }} near limit</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Overall Progress Bar ═══ -->
+        {% if budgets %}
+        <div class="chart-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold text-dark" style="font-size:.95rem;">
+                    Overall Budget Health — {{ month_name }} {{ selected_year }}
+                </span>
+                <span class="fw-bold" style="font-size:.95rem;
+                    color:{% if overall_percent > 100 %}#dc2626{% elif overall_percent >= 80 %}#d97706{% else %}#16a34a{% endif %};">
+                    {{ overall_percent }}% used
+                </span>
+            </div>
+            <div class="budget-progress-track">
+                <div class="budget-progress-fill
+                    {% if overall_percent > 100 %}fill-danger{% elif overall_percent >= 80 %}fill-warning{% else %}fill-success{% endif %}"
+                    style="width: {% if overall_percent > 100 %}100{% else %}{{ overall_percent }}{% endif %}%;"
+                    id="overallBar"
+                    data-target="{{ overall_percent }}">
+                </div>
+            </div>
+            <div class="d-flex justify-content-between mt-2" style="font-size:.8rem;color:#94a3b8;">
+                <span>${{ total_spent|floatformat:2 }} spent</span>
+                <span>${{ total_limit|floatformat:2 }} total limit</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══ Overspending Alert Banner ═══ -->
+        {% if overspent_count %}
+        <div class="alert-overspent-banner mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="alert-icon-box">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <div class="fw-bold" style="font-size:.95rem;">
+                        ⚠️ {{ overspent_count }} budget{{ overspent_count|pluralize }} exceeded this month!
+                    </div>
+                    <div class="small" style="color:#7f1d1d;">
+                        Review your overspent categories below and adjust your spending or increase the limit.
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══ Budget Category Cards ═══ -->
+        {% if budgets %}
+        <div class="row g-4 mb-4" id="budgetCardsGrid">
+            {% for budget in budgets %}
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="budget-card {% if budget.is_overspent %}budget-card-danger{% elif budget.is_warning %}budget-card-warning{% else %}budget-card-success{% endif %}">
+
+                    <!-- Card Header: Category + Status Badge + Actions -->
+                    <div class="budget-card-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="budget-cat-icon
+                                {% if budget.is_overspent %}cat-danger
+                                {% elif budget.is_warning %}cat-warning
+                                {% else %}cat-success{% endif %}">
+                                {% if budget.category == 'housing' %}<i class="fa-solid fa-house-chimney"></i>
+                                {% elif budget.category == 'food_groceries' %}<i class="fa-solid fa-basket-shopping"></i>
+                                {% elif budget.category == 'entertainment' %}<i class="fa-solid fa-gamepad"></i>
+                                {% elif budget.category == 'utilities' %}<i class="fa-solid fa-lightbulb"></i>
+                                {% elif budget.category == 'shopping' %}<i class="fa-solid fa-bag-shopping"></i>
+                                {% elif budget.category == 'technology' %}<i class="fa-solid fa-laptop"></i>
+                                {% elif budget.category == 'dining' %}<i class="fa-solid fa-utensils"></i>
+                                {% else %}<i class="fa-solid fa-coins"></i>{% endif %}
+                            </div>
+                            <div>
+                                <div class="budget-card-title">{{ budget.get_category_display }}</div>
+                                <div class="budget-card-period">{{ month_name }} {{ selected_year }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="budget-status-pill pill-{{ budget.status_color }}">
+                                {% if budget.is_overspent %}<i class="fa-solid fa-circle-xmark me-1"></i>
+                                {% elif budget.is_warning %}<i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                {% else %}<i class="fa-solid fa-circle-check me-1"></i>{% endif %}
+                                {{ budget.status_label }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Spend Progress Bar -->
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between mb-1" style="font-size:.8rem;color:#64748b;">
+                            <span>Spent: <strong class="text-dark">${{ budget.spent|floatformat:2 }}</strong></span>
+                            <span>Limit: <strong class="text-dark">${{ budget.limit|floatformat:2 }}</strong></span>
+                        </div>
+                        <div class="budget-progress-track">
+                            <div class="budget-progress-fill fill-{{ budget.status_color }}"
+                                 data-target="{{ budget.percent_used }}"
+                                 style="width: {% if budget.percent_used > 100 %}100{% else %}{{ budget.percent_used }}{% endif %}%;">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1" style="font-size:.75rem;color:#94a3b8;">
+                            <span>{{ budget.percent_used }}% used</span>
+                            <span>
+                                {% if budget.is_overspent %}
+                                    <span class="text-danger fw-semibold">-${{ budget.remaining|floatformat:2|slice:"1:" }} over budget</span>
+                                {% else %}
+                                    <span class="text-success fw-semibold">${{ budget.remaining|floatformat:2 }} left</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Doughnut micro-chart canvas -->
+                    <div class="d-flex justify-content-center my-3">
+                        <div class="budget-doughnut-wrap">
+                            <canvas class="budget-doughnut-chart"
+                                    data-spent="{{ budget.spent }}"
+                                    data-limit="{{ budget.limit }}"
+                                    data-color="{% if budget.is_overspent %}#dc2626{% elif budget.is_warning %}#d97706{% else %}#16a34a{% endif %}"
+                                    width="90" height="90">
+                            </canvas>
+                            <div class="budget-doughnut-label">
+                                <span>{{ budget.percent_used }}%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if budget.notes %}
+                    <div class="budget-card-notes">
+                        <i class="fa-solid fa-note-sticky me-1 text-muted"></i>
+                        {{ budget.notes|truncatechars:60 }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Edit / Delete Actions -->
+                    <div class="budget-card-actions">
+                        <a href="{% url 'budget_edit' budget.pk %}" class="budget-action-btn btn-edit">
+                            <i class="fa-regular fa-pen-to-square me-1"></i> Edit
+                        </a>
+                        <a href="{% url 'budget_delete' budget.pk %}" class="budget-action-btn btn-delete">
+                            <i class="fa-regular fa-trash-can me-1"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="budget-empty-state">
+            <div class="budget-empty-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <h4 class="fw-bold mb-2">No budgets for {{ month_name }} {{ selected_year }}</h4>
+            <p class="text-secondary mb-4">Set spending limits for your expense categories to stay in control.</p>
+            <a href="{% url 'budget_create' %}" class="btn btn-auth-primary px-4" style="width:auto;display:inline-flex;gap:.5rem;">
+                <i class="fa-solid fa-plus"></i> Create Your First Budget
+            </a>
+        </div>
+        {% endif %}
+
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ── Mobile sidebar ──────────────────────────────────────────────────────
+    const sidebarToggle  = document.querySelector('#sidebarToggle');
+    const dashboardSidebar = document.querySelector('#dashboardSidebar');
+    const sidebarBackdrop = document.querySelector('#sidebarBackdrop');
+    if (sidebarToggle && dashboardSidebar && sidebarBackdrop) {
+        sidebarToggle.addEventListener('click', () => {
+            dashboardSidebar.classList.toggle('show');
+            sidebarBackdrop.classList.toggle('show');
+        });
+        sidebarBackdrop.addEventListener('click', () => {
+            dashboardSidebar.classList.remove('show');
+            sidebarBackdrop.classList.remove('show');
+        });
+    }
+
+    // ── Doughnut micro-charts for each budget card ─────────────────────────
+    document.querySelectorAll('.budget-doughnut-chart').forEach(function(canvas) {
+        const spent = parseFloat(canvas.dataset.spent) || 0;
+        const limit = parseFloat(canvas.dataset.limit) || 1;
+        const color = canvas.dataset.color || '#16a34a';
+        const remaining = Math.max(0, limit - spent);
+
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [spent, remaining],
+                    backgroundColor: [color, '#f1f5f9'],
+                    borderWidth: 0,
+                    hoverOffset: 0,
+                }]
+            },
+            options: {
+                cutout: '72%',
+                responsive: false,
+                animation: { animateRotate: true, duration: 800 },
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            }
+        });
+    });
+
+    // ── Animate progress bars on scroll/load ──────────────────────────────
+    const bars = document.querySelectorAll('.budget-progress-fill');
+    bars.forEach(function(bar) {
+        const target = Math.min(parseFloat(bar.dataset.target) || 0, 100);
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 0.8s cubic-bezier(.4,0,.2,1)';
+            bar.style.width = target + '%';
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

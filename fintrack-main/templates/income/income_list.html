@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Earnings History{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+<style>
+    /* Mobile sidebar backdrop overlay */
+    .mobile-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        display: none;
+    }
+    .mobile-backdrop.show {
+        display: block;
+    }
+    /* Action icon buttons for edit/delete */
+    .btn-action-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        background-color: #ffffff;
+        transition: all 0.2s;
+    }
+    .btn-action-icon:hover {
+        background-color: #f8fafc;
+    }
+    .btn-action-edit:hover {
+        color: #3b2cd4;
+        border-color: #3b2cd4;
+    }
+    .btn-action-delete:hover {
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+    /* Search and filter bar card */
+    .filter-bar {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+    }
+    /* Income amount styling — green positive indicator */
+    .amount-income {
+        color: #16a34a;
+        font-size: 0.95rem;
+    }
+    /* Income summary cards at top */
+    .income-stat-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        transition: box-shadow 0.2s;
+    }
+    .income-stat-card:hover {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+    }
+    .income-stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    .income-stat-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 0.2rem;
+    }
+    .income-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="mobile-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Sidebar Panel -->
+    <aside class="sidebar" id="dashboardSidebar">
+        <a href="{% url 'landing' %}" class="sidebar-logo">
+            <div class="sidebar-logo-icon">
+                <i class="fa-solid fa-box-open"></i>
+            </div>
+            <span class="sidebar-logo-text">FinTrack</span>
+        </a>
+
+        <!-- Sidebar Navigation -->
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{% url 'dashboard' %}" class="sidebar-link">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'expense_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-credit-card"></i> Expenses
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'income_list' %}" class="sidebar-link active">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Earnings
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'budget_list' %}" class="sidebar-link">
+                    <i class="fa-solid fa-wallet"></i> Budgets
+                </a>
+            </li>
+            <li>
+                <a href="#" class="sidebar-link">
+                    <i class="fa-solid fa-chart-line"></i> Reports
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'change_password' %}" class="sidebar-link">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </li>
+        </ul>
+
+        <!-- Upgrade to Pro Card -->
+        <div class="sidebar-banner">
+            <h4 class="sidebar-banner-title">Upgrade to Pro</h4>
+            <p class="sidebar-banner-text">Get advanced insights, custom alerts, and unlimited reports.</p>
+            <button class="btn btn-sidebar-banner">Unlock Now</button>
+        </div>
+    </aside>
+
+    <!-- Main Content Section -->
+    <main class="main-content">
+
+        <!-- Top Header Navbar -->
+        <header class="main-header">
+            <div class="d-flex align-items-center gap-3">
+                <button class="mobile-header-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="navbarSearchInput" placeholder="Search income sources...">
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn-notification" aria-label="View notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notification-badge"></span>
+                </button>
+
+                <!-- User profile dropdown -->
+                <div class="dropdown">
+                    <div class="user-profile-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="avatar-icon">
+                            {{ user.username|slice:":1"|upper }}
+                        </div>
+                        <div class="profile-info d-none d-sm-block">
+                            <h5 class="profile-name">{{ user.full_name|default:user.username }}</h5>
+                            <p class="profile-role">Premium Account</p>
+                        </div>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2" style="border-radius: 12px; font-size: 0.9rem;">
+                        <li class="px-3 py-2 border-bottom">
+                            <span class="text-muted d-block small">Logged in as</span>
+                            <strong>{{ user.email }}</strong>
+                        </li>
+                        <li><a class="dropdown-menu-item dropdown-item py-2 px-3 mt-1" href="{% url 'change_password' %}"><i class="fa-solid fa-key text-muted me-2"></i> Change Password</a></li>
+                        <li><a class="dropdown-menu-item dropdown-item py-2 px-3 text-danger" href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket me-2"></i> Log Out</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        {% if messages %}
+        <div class="row mb-4">
+            <div class="col-12">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'success' %}
+                        <i class="fa-solid fa-circle-check"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    {% else %}
+                        <i class="fa-solid fa-circle-info"></i>
+                    {% endif %}
+                    <div>{{ message }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Page Heading -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="fw-bold text-dark mb-1" style="font-size: 1.75rem;">Earnings History</h1>
+                <p class="text-secondary mb-0" style="font-size: 0.95rem;">Track and manage all your income sources and earnings.</p>
+            </div>
+            <div>
+                <a href="{% url 'income_create' %}" class="btn btn-auth-primary d-flex align-items-center gap-2 text-decoration-none" style="width: auto; padding: 0.65rem 1.25rem; color: #ffffff;">
+                    <i class="fa-solid fa-plus"></i> Add Income
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Stat Cards -->
+        <div class="row g-3 mb-4">
+            <!-- Total Entries Count -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="income-stat-card d-flex align-items-center gap-3">
+                    <div class="income-stat-icon" style="background-color: #f0fdf4; color: #16a34a;">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                    </div>
+                    <div>
+                        <div class="income-stat-label">Total Records</div>
+                        <div class="income-stat-value">{{ paginator.count }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Salary Source Count -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="income-stat-card d-flex align-items-center gap-3">
+                    <div class="income-stat-icon" style="background-color: #eff6ff; color: #3b82f6;">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </div>
+                    <div>
+                        <div class="income-stat-label">Categories</div>
+                        <div class="income-stat-value">{{ categories|length }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Page Range -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="income-stat-card d-flex align-items-center gap-3">
+                    <div class="income-stat-icon" style="background-color: #fef9c3; color: #ca8a04;">
+                        <i class="fa-solid fa-filter"></i>
+                    </div>
+                    <div>
+                        <div class="income-stat-label">Filter Active</div>
+                        <div class="income-stat-value" style="font-size: 0.95rem; margin-top: 0.15rem;">
+                            {% if search_query or selected_category != 'all' %}
+                                <span class="badge" style="background-color: #fef9c3; color: #ca8a04; border: 1px solid #fde68a; font-size: 0.75rem; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 8px;">Yes</span>
+                            {% else %}
+                                <span class="badge" style="background-color: #f1f5f9; color: #64748b; font-size: 0.75rem; font-weight: 600; padding: 0.35rem 0.65rem; border-radius: 8px;">None</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Add Card -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a href="{% url 'income_create' %}" class="income-stat-card d-flex align-items-center gap-3 text-decoration-none" style="border: 2px dashed #c7d2fe; background: #eef2ff; cursor: pointer;">
+                    <div class="income-stat-icon" style="background-color: #3b2cd4; color: #ffffff;">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <div>
+                        <div class="income-stat-label" style="color: #3b2cd4;">Quick Action</div>
+                        <div style="font-size: 0.9rem; font-weight: 600; color: #3b2cd4;">Log New Income</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="filter-bar mb-4">
+            <form method="GET" class="row g-3 align-items-center" id="filterForm">
+                <!-- Text search field -->
+                <div class="col-12 col-md-6 col-lg-5">
+                    <label for="q" class="form-label mb-1">Search Source / Description</label>
+                    <div class="position-relative">
+                        <input type="text" name="q" id="q" class="form-control" placeholder="Search by source name or description..." value="{{ search_query }}">
+                    </div>
+                </div>
+
+                <!-- Category dropdown filter -->
+                <div class="col-12 col-md-4 col-lg-4">
+                    <label for="category" class="form-label mb-1">Category Filter</label>
+                    <select name="category" id="category" class="form-select" onchange="document.getElementById('filterForm').submit();">
+                        <option value="all" {% if selected_category == 'all' %}selected{% endif %}>All Categories</option>
+                        {% for cat_val, cat_label in categories %}
+                            <option value="{{ cat_val }}" {% if selected_category == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Submit & Reset buttons -->
+                <div class="col-12 col-md-2 col-lg-3 d-flex gap-2 align-self-end">
+                    <button type="submit" class="btn btn-auth-primary py-2" style="font-size: 0.85rem;">Filter</button>
+                    {% if search_query or selected_category != 'all' %}
+                        <a href="{% url 'income_list' %}" class="btn btn-outline-secondary py-2" style="font-size: 0.85rem; border-radius: 10px;">Reset</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- Income Records Table -->
+        <div class="chart-card p-0 mb-4">
+            <div class="table-responsive">
+                <table class="table transactions-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for income in incomes %}
+                        <tr>
+                            <td>
+                                <div class="transaction-name-cell">
+                                    <!-- Category icon box -->
+                                    <div class="transaction-icon-box" style="background-color: #f0fdf4; color: #16a34a;">
+                                        {% if income.category == 'salary' %}
+                                            <i class="fa-solid fa-briefcase"></i>
+                                        {% elif income.category == 'freelance' %}
+                                            <i class="fa-solid fa-laptop-code"></i>
+                                        {% elif income.category == 'investments' %}
+                                            <i class="fa-solid fa-chart-line"></i>
+                                        {% elif income.category == 'business' %}
+                                            <i class="fa-solid fa-store"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-coins"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <span>{{ income.title }}</span>
+                                        {% if income.description %}
+                                            <span class="text-muted small fw-normal">{{ income.description|truncatechars:45 }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted small fw-medium">{{ income.get_category_display }}</span>
+                            </td>
+                            <td>
+                                <span class="text-muted small">{{ income.date }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'income_edit' income.pk %}" class="btn-action-icon btn-action-edit" title="Edit income">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </a>
+                                    <a href="{% url 'income_delete' income.pk %}" class="btn-action-icon btn-action-delete" title="Delete income">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <span class="amount-income fw-bold">+${{ income.amount|floatformat:2 }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="text-muted mb-3">
+                                    <i class="fa-solid fa-arrow-trend-up fs-1 text-light"></i>
+                                </div>
+                                <h5 class="fw-semibold">No income records found</h5>
+                                <p class="text-secondary small mb-3">Start tracking your earnings by clicking the button below.</p>
+                                <a href="{% url 'income_create' %}" class="btn btn-auth-primary py-2 px-4" style="width: auto; display: inline-flex;">Log Your First Income</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            {% if is_paginated %}
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center px-4 py-3 border-top gap-3">
+                <div class="text-muted small fw-medium">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} entries
+                </div>
+                <nav aria-label="Income page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <!-- Previous Page -->
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+
+                        <!-- Page Number Links -->
+                        {% for num in paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link" style="background-color: #3b2cd4; border-color: #3b2cd4;">{{ num }}</span></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Next Page -->
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+
+    </main>
+</div>
+
+<!-- Sidebar Toggle & Search Sync Scripts -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Mobile sidebar toggle
+        const sidebarToggle = document.querySelector('#sidebarToggle');
+        const dashboardSidebar = document.querySelector('#dashboardSidebar');
+        const sidebarBackdrop = document.querySelector('#sidebarBackdrop');
+
+        if (sidebarToggle && dashboardSidebar && sidebarBackdrop) {
+            sidebarToggle.addEventListener('click', function () {
+                dashboardSidebar.classList.toggle('show');
+                sidebarBackdrop.classList.toggle('show');
+            });
+
+            sidebarBackdrop.addEventListener('click', function () {
+                dashboardSidebar.classList.remove('show');
+                sidebarBackdrop.classList.remove('show');
+            });
+        }
+
+        // Sync header navbar search with filter form input
+        const navbarSearch = document.querySelector('#navbarSearchInput');
+        const queryInput = document.querySelector('#q');
+        const filterForm = document.querySelector('#filterForm');
+
+        if (navbarSearch && queryInput && filterForm) {
+            navbarSearch.value = queryInput.value;
+            navbarSearch.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    queryInput.value = this.value;
+                    filterForm.submit();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

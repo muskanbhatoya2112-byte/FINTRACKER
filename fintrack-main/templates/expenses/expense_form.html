@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FinTrack - Log Spending Activity{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/auth.css' %}" rel="stylesheet">
+<style>
+.expense-card{
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.04),0 1px 8px rgba(0,0,0,.02);
+    width:100%;
+    max-width:520px;
+    padding:2.5rem;
+    position:relative;
+    overflow:hidden;
+    border:1px solid rgba(226,232,240,.8);
+}
+.expense-card::before{
+    content:'';
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:4px;
+    background:linear-gradient(90deg,#3b2cd4 0%,#06b6d4 100%);
+}
+.card-close-btn{
+    position:absolute;
+    top:1.5rem;
+    right:1.5rem;
+    color:#94a3b8;
+    font-size:1.25rem;
+    text-decoration:none;
+}
+.card-close-btn:hover{
+    color:#ef4444;
+}
+.receipt-upload-box{
+    border:2px dashed #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+    padding:1.5rem;
+    text-align:center;
+    cursor:pointer;
+}
+.receipt-upload-box:hover{
+    border-color:#3b2cd4;
+}
+.receipt-upload-box i{
+    color:#3b2cd4;
+    font-size:2rem;
+    margin-bottom:.5rem;
+}
+#id_receipt{
+    display:none!important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="auth-wrapper" style="background:#f8fafc;">
+    <div class="expense-card">
+
+        <a href="{% url 'expense_list' %}" class="card-close-btn">
+            <i class="fa-solid fa-xmark"></i>
+        </a>
+
+        <h2 class="auth-title">
+            {% if form.instance.pk %}
+                Edit Expense
+            {% else %}
+                Add Expense
+            {% endif %}
+        </h2>
+
+        <p class="auth-subtitle">
+            {% if form.instance.pk %}
+                Modify your expense.
+            {% else %}
+                Log your spending.
+            {% endif %}
+        </p>
+
+        <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <!-- TITLE -->
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="text-danger small">
+                        {{ form.title.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- AMOUNT -->
+            <div class="mb-3">
+                <label class="form-label">Amount</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    {{ form.amount }}
+                </div>
+                {% if form.amount.errors %}
+                    <div class="text-danger small">
+                        {{ form.amount.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- CATEGORY -->
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                {{ form.category }}
+            </div>
+
+            <!-- DATE -->
+            <div class="mb-3">
+                <label class="form-label">Date</label>
+                {{ form.date }}
+            </div>
+
+            <!-- DESCRIPTION -->
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+            </div>
+
+            <!-- RECEIPT -->
+            <div class="mb-4">
+                <label class="form-label">Receipt</label>
+
+                <div class="receipt-upload-box" id="receiptUploadBox">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+
+                    <p id="receiptBoxFilename">
+                        Drop your receipt here
+                    </p>
+
+                    <small>
+                        PDF, JPG, JPEG, PNG (Max 10MB)
+                    </small>
+
+                    {{ form.receipt }}
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3">
+
+                <a href="{% url 'expense_list' %}" class="btn btn-secondary">
+                    Cancel
+                </a>
+
+                <button class="btn btn-primary" type="submit">
+                    {% if form.instance.pk %}
+                        Update Expense
+                    {% else %}
+                        Add Expense
+                    {% endif %}
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+
+const upload=document.getElementById("receiptUploadBox");
+const input=document.getElementById("id_receipt");
+const label=document.getElementById("receiptBoxFilename");
+
+if(upload && input){
+
+upload.onclick=function(){
+input.click();
+}
+
+input.onchange=function(){
+
+if(input.files.length>0){
+label.innerHTML=input.files[0].name;
+}
+
+}
+
+}
+
+});
+</script>
+
+{% endblock %}
